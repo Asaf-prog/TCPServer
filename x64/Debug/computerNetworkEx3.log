@@ -1,0 +1,4 @@
+﻿  server.cpp
+C:\Users\asafr\source\repos\computerNetworkEx3\server.cpp(287,21): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\asafr\source\repos\computerNetworkEx3\server.cpp(319,71): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  computerNetworkEx3.vcxproj -> C:\Users\asafr\source\repos\computerNetworkEx3\x64\Debug\computerNetworkEx3.exe
