@@ -1,2 +1,7 @@
-﻿  computerNetworkEx3.cpp
+﻿  Http.cpp
+C:\Users\asafr\source\repos\computerNetworkEx3\Http.cpp(7,15): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\asafr\source\repos\computerNetworkEx3\Http.cpp(76,24): warning C4244: '=': conversion from 'std::streamoff' to 'int', possible loss of data
+  computerNetworkEx3.cpp
+  server.cpp
+  Generating Code...
   computerNetworkEx3.vcxproj -> C:\Users\asafr\source\repos\computerNetworkEx3\x64\Debug\computerNetworkEx3.exe
