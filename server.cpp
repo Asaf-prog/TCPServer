@@ -175,6 +175,30 @@ void acceptConnection(int index, struct SocketState* sockets, int* socketsCount)
 	return;
 }
 
+void receiveMessage(int index, struct SocketState* sockets, int* socketsCount)
+{
+	SOCKET msgSocket = sockets[index].id;
+	int len = sockets[index].len;
+	int bytesRecv = recv(msgSocket, &sockets[index].buffer[len], sizeof(sockets[index].buffer) - len, 0);
+
+	sockets[index].responseTime = clock();
+
+	if (SOCKET_ERROR == bytesRecv)
+	{
+		handleRecvError(index, msgSocket, sockets, socketsCount);
+		return;
+	}
+
+	if (bytesRecv == 0)
+	{
+		closesocket(msgSocket);
+		removeSocket(index, sockets, socketsCount);
+		return;
+	}
+
+	handleRecvSuccess(index, msgSocket, bytesRecv, sockets, socketsCount);
+}
+
 void handleRecvError(int index, SOCKET msgSocket, struct SocketState* sockets, int* socketsCount) 
 {
 	cout << "T3 Server: Error at recv(): " << WSAGetLastError() << endl;
@@ -263,31 +287,6 @@ void parseRequest(string& cmd, string& path, stringstream& mesStream, Request* r
 		req->status = 501;
 	}
 }
-
-void receiveMessage(int index, struct SocketState* sockets, int* socketsCount) 
-{
-	SOCKET msgSocket = sockets[index].id;
-	int len = sockets[index].len;
-	int bytesRecv = recv(msgSocket, &sockets[index].buffer[len], sizeof(sockets[index].buffer) - len, 0);
-
-	sockets[index].responseTime = clock();
-
-	if (SOCKET_ERROR == bytesRecv) 
-	{
-		handleRecvError(index, msgSocket, sockets, socketsCount);
-		return;
-	}
-
-	if (bytesRecv == 0) 
-	{
-		closesocket(msgSocket);
-		removeSocket(index, sockets, socketsCount);
-		return;
-	}
-
-	handleRecvSuccess(index, msgSocket, bytesRecv, sockets, socketsCount);
-}
-
 
 void removeSocket(int index, struct SocketState* sockets, int* socketsCount)
 {
