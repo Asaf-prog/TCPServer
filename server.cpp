@@ -1,4 +1,4 @@
-# include "Server.h"
+#include "Server.h"
 
 void importLib()
 {
@@ -263,7 +263,8 @@ void parseRequest(string& cmd, string& path, stringstream& mesStream, Request* r
 	{
 		req->method = DEL;
 		FindWantedFile(path, req, &cmd);
-		req->status = remove(req->file.name.c_str()) ? 404 : 200;
+		string fullPath = BASE_PATH + req->file.name;
+		req->status = remove(fullPath.c_str()) ? 404 : 200;
 		ParseMsg(mesStream, req);
 	}
 	else if (cmd == "TRACE") 
@@ -278,7 +279,8 @@ void parseRequest(string& cmd, string& path, stringstream& mesStream, Request* r
 		FindWantedFile(path, req, &cmd);
 		ParsePutMsg(mesStream, req);
 		GetFile(req);
-		ofstream Newfile(req->file.name);
+		string fullPath = BASE_PATH + req->file.name;
+		ofstream Newfile(fullPath);
 		Newfile << req->file.content;
 		Newfile.close();
 	}
@@ -377,7 +379,7 @@ void AppendLanguageToFileName(Request* req)
 
 void CheckFileExistence(Request* req)
 {
-	string fullPath = basePath + req->file.name;
+	string fullPath = BASE_PATH + req->file.name;
 
 	ifstream file(fullPath);
 
@@ -395,7 +397,7 @@ void CheckFileExistence(Request* req)
 
 void GetFileContent(Request* req)
 {
-	string fullPath = basePath + req->file.name;
+	string fullPath = BASE_PATH + req->file.name;
 	ifstream file(fullPath);
 
 	if (req->status == 200 && req->method == GET)

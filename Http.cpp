@@ -49,7 +49,7 @@ void ParseGetMsg(stringstream& mesStream, struct Request* req)
 
 	while (currAtt.key != "END") 
 	{
-		if (currAtt.key == "Accept-language") 
+		if (currAtt.key == "Accept-Language") 
 		{
 			// in the case that the query strings are not available
 			
@@ -120,14 +120,11 @@ void ParsePostMsg(stringstream& mesStream, struct Request* req)
 			
 			req->postContent.length = currAtt.data;
 			len = atoi(req->postContent.length.c_str());
-			do 
-			{
-				mesStream >> temp;
-				req->postContent.data.append(temp);
-				req->postContent.data.push_back(' ');
-			} while (req->postContent.data.size() < len);
+			len += 2;
 			
-			req->postContent.data.pop_back(); // remove last space
+			vector<char> buffer(len);
+			mesStream.read(buffer.data(), len);
+			req->postContent.data.assign(buffer.data(), len);
 
 			cout << "POST:\n" << req->postContent.data << endl;
 			break;
@@ -221,8 +218,7 @@ void AddMethodSpecificHeaders(struct SocketState socket, stringstream& message)
 			AddGETResponse(socket, message);
 			break;
 		case OPTIONS:
-			message << "Allow: GET, POST, PUT, OPTIONS, DELETE, TRACE, HEAD\n"
-				<< "Accept-Language: he, en, fr\n\n";
+			message << "Allow: GET, POST, PUT, OPTIONS, DELETE, TRACE, HEAD\n\n";
 			break;
 		case HEAD:
 			AddHEADResponse(socket, message);

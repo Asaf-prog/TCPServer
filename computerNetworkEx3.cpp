@@ -1,6 +1,4 @@
-#pragma once
 #include "Server.h"
-
 
 int main()
 {

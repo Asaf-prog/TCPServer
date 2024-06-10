@@ -1,9 +1,4 @@
 #pragma once
-#define _CRT_SECURE_NO_WARNINGS
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#define _CRT_NONSTDC_NO_DEPRECATE
-
-using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 #include <winsock2.h>
 #include "HTTP.h"

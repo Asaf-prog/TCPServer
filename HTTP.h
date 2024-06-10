@@ -1,5 +1,7 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_NONSTDC_NO_DEPRECATE
 
 #include <iostream>
 using namespace std;
@@ -9,6 +11,10 @@ using namespace std;
 #include <string.h>
 #include <sstream>
 #include <time.h>
+#include <vector>
+
+#define BASE_PATH "C:/Users/asafr/Desktop/test/"
+
 
 
 const int ERR = -1;
@@ -70,7 +76,7 @@ const int IDLE = 3;
 const int SEND = 4;
 const int SEND_TIME = 1;
 const int SEND_SECONDS = 2;
-const char* basePath = "/C:/Users/asafr/Desktop/";
+
 
 void FindWantedFile(string path, struct Request* req, string* cmd);
 void ParseGetMsg(stringstream& mesStream, struct Request* req);
