@@ -8,9 +8,7 @@ using namespace std;
 #include <sstream>
 #include <time.h>
 
-//string CreateMessage(void);
 
-//macros for request methods:
 const int ERR = -1;
 const int OPTIONS = 1;
 const int GET = 2;
@@ -39,21 +37,25 @@ struct WantedFile {
 };
 
 struct Request {
-	int method;
-	int status;
-	struct WantedFile file;
-	struct PostInfo postContent;// for POST requests only
+	int method = 0;         
+	int status = 0;         
+	WantedFile file;        
+	PostInfo postContent;   
 };
 
-struct SocketState
-{
-	SOCKET id;			// Socket handle
-	int	recv;			// Receiving?
-	int	send;			// Sending?
-	char buffer[1500];
-	int len;
-	struct Request req;
-	clock_t responseTime = NULL, turnaroundTime = NULL;
+struct SocketState {
+	SOCKET id = 0;         
+	int recv = 0;          
+	int send = 0;          
+	char buffer[1500] = { 0 }; // Initialize buffer to zeros
+	int len = 0;           
+	Request req;           
+	clock_t responseTime = 0; 
+	clock_t turnaroundTime = 0;
+
+	SocketState() {
+		std::memset(buffer, 0, sizeof(buffer)); 
+	}
 };
 
 const int TIME_PORT = 8080;

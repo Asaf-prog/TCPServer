@@ -29,6 +29,7 @@ SOCKET initiateSocket(void)
 void bindSocket(SOCKET* m_socket) 
 {
 	sockaddr_in serverService;
+	memset(&serverService, 0, sizeof(serverService));
 	serverService.sin_family = AF_INET;
 	serverService.sin_addr.s_addr = INADDR_ANY;	
 	serverService.sin_port = htons(TIME_PORT);
@@ -174,126 +175,119 @@ void acceptConnection(int index, struct SocketState* sockets, int* socketsCount)
 	return;
 }
 
+void handleRecvError(int index, SOCKET msgSocket, struct SocketState* sockets, int* socketsCount) 
+{
+	cout << "T3 Server: Error at recv(): " << WSAGetLastError() << endl;
+	closesocket(msgSocket);
+	removeSocket(index, sockets, socketsCount);
+}
+
+void handleRecvSuccess(int index, SOCKET msgSocket, int bytesRecv, struct SocketState* sockets, int* socketsCount) 
+{
+	sockets[index].buffer[sockets[index].len + bytesRecv] = '\0'; // add the null-terminating to make it a string
+	sockets[index].len += bytesRecv;
+	sockets[index].req.file.name.clear();
+	sockets[index].req.file.content.clear();
+	sockets[index].req.postContent.data.clear();
+
+	stringstream mesStream(sockets[index].buffer);
+	string cmd, path, httpVersion;
+	mesStream >> cmd;
+	mesStream >> path;
+	mesStream >> httpVersion;
+
+	parseRequest(cmd, path, mesStream, &(sockets[index].req));
+
+	size_t currIndex = mesStream.tellg();
+	int totalReqBytes = (currIndex == -1) ? sockets[index].len : static_cast<int>(currIndex);
+
+	sockets[index].send = SEND;
+	memcpy(sockets[index].buffer, &sockets[index].buffer[totalReqBytes], sockets[index].len - totalReqBytes); // move to the start of the buffer
+	sockets[index].len -= totalReqBytes;
+}
+
+void parseRequest(string& cmd, string& path, stringstream& mesStream, Request* req) 
+{
+	if (cmd == "GET") 
+	{
+		FindWantedFile(path, req, &cmd);
+		req->method = GET;
+		ParseGetMsg(mesStream, req);
+		GetFile(req);
+	}
+	else if (cmd == "OPTIONS") 
+	{
+		req->method = OPTIONS;
+		req->status = 204;
+		ParseMsg(mesStream, req);
+	}
+	else if (cmd == "HEAD") 
+	{
+		FindWantedFile(path, req, &cmd);
+		req->method = HEAD;
+		ParseGetMsg(mesStream, req);
+		GetFile(req);
+	}
+	else if (cmd == "POST") 
+	{
+		req->method = POST;
+		req->status = 200;
+		ParsePostMsg(mesStream, req);
+	}
+	else if (cmd == "DELETE") 
+	{
+		req->method = DEL;
+		FindWantedFile(path, req, &cmd);
+		req->status = remove(req->file.name.c_str()) ? 404 : 200;
+		ParseMsg(mesStream, req);
+	}
+	else if (cmd == "TRACE") 
+	{
+		req->method = TRACE;
+		req->status = 200;
+		ParseMsg(mesStream, req);
+	}
+	else if (cmd == "PUT") 
+	{
+		req->method = PUT;
+		FindWantedFile(path, req, &cmd);
+		ParsePutMsg(mesStream, req);
+		GetFile(req);
+		ofstream Newfile(req->file.name);
+		Newfile << req->file.content;
+		Newfile.close();
+	}
+	else 
+	{
+		req->method = ERR;
+		req->status = 501;
+	}
+}
+
 void receiveMessage(int index, struct SocketState* sockets, int* socketsCount) 
 {
 	SOCKET msgSocket = sockets[index].id;
-	string cmd, path, httpVersion;
-	size_t currIndex;
-	int len = sockets[index].len, totalReqBytes;
+	int len = sockets[index].len;
 	int bytesRecv = recv(msgSocket, &sockets[index].buffer[len], sizeof(sockets[index].buffer) - len, 0);
 
 	sockets[index].responseTime = clock();
 
-	if (SOCKET_ERROR == bytesRecv)
+	if (SOCKET_ERROR == bytesRecv) 
 	{
-		cout << "T3 Server: Error at recv(): " << WSAGetLastError() << endl;
+		handleRecvError(index, msgSocket, sockets, socketsCount);
+		return;
+	}
+
+	if (bytesRecv == 0) 
+	{
 		closesocket(msgSocket);
 		removeSocket(index, sockets, socketsCount);
 		return;
 	}
-	if (bytesRecv == 0)
-	{
-		closesocket(msgSocket);
-		removeSocket(index, sockets, socketsCount);
-		return;
-	}
-	else
-	{
-		sockets[index].buffer[len + bytesRecv] = '\0'; //add the null-terminating to make it a string
-		sockets[index].len += bytesRecv;
-		sockets[index].req.file.name.clear();
-		sockets[index].req.file.content.clear();
-		sockets[index].req.postContent.data.clear();
 
-		stringstream mesStream(sockets[index].buffer);
-
-		//parse initial components of the request
-		mesStream >> cmd;
-		mesStream >> path;
-		mesStream >> httpVersion;
-
-		if (cmd == "GET") 
-		{
-			FindWantedFile(path, &(sockets[index].req), &cmd);
-			sockets[index].req.method = GET;
-			ParseGetMsg(mesStream, &(sockets[index].req));//find interesting headers and store them
-			GetFile(&sockets[index].req);
-		}
-		else if (cmd == "OPTIONS") 
-		{
-			sockets[index].req.method = OPTIONS;
-			sockets[index].req.status = 204;
-			ParseMsg(mesStream, &(sockets[index].req));
-		}
-		else if (cmd == "HEAD") 
-		{
-			FindWantedFile(path, &(sockets[index].req), &cmd);
-			sockets[index].req.method = HEAD;
-			//using the get function because the process is the same
-			ParseGetMsg(mesStream, &(sockets[index].req));//find interesting headers and store them
-			GetFile(&sockets[index].req);
-		}
-		else if (cmd == "POST") 
-		{
-			sockets[index].req.method = POST;
-			sockets[index].req.status = 200;
-			ParsePostMsg(mesStream, &(sockets[index].req));//find interesting headers and store them;
-		}
-		else if (cmd == "DELETE") 
-		{
-			sockets[index].req.method = DEL;
-			FindWantedFile(path, &(sockets[index].req), &cmd);
-			if (remove(sockets[index].req.file.name.c_str()))//removing file
-				sockets[index].req.status = 404;
-			else
-				sockets[index].req.status = 200;
-			ParseMsg(mesStream, &(sockets[index].req));
-		}
-		else if (cmd == "TRACE") 
-		{
-			sockets[index].req.method = TRACE;
-			sockets[index].req.status = 200;
-			ParseMsg(mesStream, &(sockets[index].req));
-		}
-		else if (cmd == "PUT") 
-		{
-			sockets[index].req.method = PUT;
-			FindWantedFile(path, &(sockets[index].req), &cmd);
-			ParsePutMsg(mesStream, &(sockets[index].req));
-			GetFile(&sockets[index].req);
-			//writing to file
-			ofstream Newfile(sockets[index].req.file.name);
-			Newfile << sockets[index].req.file.content;
-			Newfile.close();
-		}
-		else 
-		{
-			sockets[index].req.method = ERR;
-			sockets[index].req.status = 501;
-		}
-
-		if (sockets[index].len > 0) 
-		{
-			//updating buffer size, moving to the next request(if exists)
-			currIndex = mesStream.tellg();
-
-			if (currIndex == -1)
-			{
-				//if we have reached the end of the buffer
-				totalReqBytes = sockets[index].len;
-			}
-			else
-			{
-				totalReqBytes = currIndex;
-			}
-
-			sockets[index].send = SEND;
-			memcpy(sockets[index].buffer, &sockets[index].buffer[totalReqBytes], sockets[index].len - totalReqBytes);//move to the start of the buffer
-			sockets[index].len -= totalReqBytes;
-		}
-
-	}
+	handleRecvSuccess(index, msgSocket, bytesRecv, sockets, socketsCount);
 }
+
 
 void removeSocket(int index, struct SocketState* sockets, int* socketsCount)
 {

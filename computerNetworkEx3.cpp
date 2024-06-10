@@ -1,12 +1,12 @@
 #include <iostream>
-
 #include "Server.h"
 
 int main()
 {
     fd_set waitRecv, waitSend;
     int nfd;
-    struct SocketState sockets[MAX_SOCKETS] = { 0 };
+   
+    SocketState* sockets = new SocketState[MAX_SOCKETS](); 
     int socketsCount = 0;
 
     importLib();
@@ -37,6 +37,7 @@ int main()
 
     finishingUp(listenSocket);
 
+    delete[] sockets;
     return 0;
 }
 
