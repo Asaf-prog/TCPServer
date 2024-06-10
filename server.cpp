@@ -218,6 +218,7 @@ void handleRecvSuccess(int index, SOCKET msgSocket, int bytesRecv, struct Socket
 	string cmd, path, httpVersion;
 	mesStream >> cmd;
 	mesStream >> path;
+	// me use in the variable 'httpVersion' to take the mesStream after the token that represent the hpp version
 	mesStream >> httpVersion;
 
 	parseRequest(cmd, path, mesStream, &(sockets[index].req));
@@ -283,6 +284,7 @@ void parseRequest(string& cmd, string& path, stringstream& mesStream, Request* r
 	}
 	else 
 	{
+		// internal server error
 		req->method = ERR;
 		req->status = 501;
 	}
@@ -310,16 +312,22 @@ void sendMessage(int index, struct SocketState* sockets, int* socketsCount)
 	{
 		sendBuff = CreateMessage(sockets[index]);
 		bytesSent = send(msgSocket, sendBuff.c_str(), static_cast<int>( sendBuff.size()), 0);
+		
 		if (SOCKET_ERROR == bytesSent)
 		{
 			cout << "T3 Server: Error at send(): " << WSAGetLastError() << endl;
 			return;
 		}
 
-		if (sockets[index].len > 0)// if there are more requests
+		if (sockets[index].len > 0)
+		{
+			// if there are more requests
 			sockets[index].send = SEND;
+		}
 		else
+		{
 			sockets[index].send = IDLE;
+		}
 	}
 	else 
 	{
@@ -329,19 +337,14 @@ void sendMessage(int index, struct SocketState* sockets, int* socketsCount)
 	}
 }
 
-void GetFile(struct Request* req) 
+void AppendLanguageToFileName(Request* req)
 {
-	//check if file exists
-
-	stringstream stream;
-	size_t nameSize = req->file.name.size();
-	size_t size;
-	string fileEnding;
-	char c;
-
-	if (req->method == GET && req->file.language != "Not specified") 
+	if (req->file.language != "Not specified")
 	{
-		do 
+		string fileEnding;
+		char c;
+
+		do
 		{
 			c = req->file.name.back();
 			fileEnding.push_back(c);
@@ -349,47 +352,69 @@ void GetFile(struct Request* req)
 		} while (c != '.');
 
 		if (req->file.language == "Hebrew")
+		{
 			req->file.name.append("_he");
-
+		}
 		else if (req->file.language == "French")
+		{
 			req->file.name.append("_fr");
-
+		}
 		else
+		{
 			req->file.name.append("_en");
+		}
 
-		size = fileEnding.size();
+		size_t size = fileEnding.size();
 
-		for (int i = 0; i < size; i++) 
+		for (size_t i = 0; i < size; i++)
 		{
 			c = fileEnding.back();
 			req->file.name.push_back(c);
 			fileEnding.pop_back();
 		}
 	}
+}
 
-	ifstream file(req->file.name);
+void CheckFileExistence(Request* req)
+{
+	string fullPath = basePath + req->file.name;
 
-	if (!file.fail()) 
+	ifstream file(fullPath);
+
+	if (!file.fail())
 	{
 		cout << "File exists" << endl;
 		req->status = 200;
-		
-		if (req->method == GET) 
-		{
-			// if file found with GET, store its content in appropriate string
-			
-			stream << file.rdbuf();
-			req->file.content = stream.str();
-		}
 	}
-	else if (req->method == GET) 
+	else
 	{
 		cout << "File does not exist" << endl;
 		req->status = 404;
 	}
-	else 
+}
+
+void GetFileContent(Request* req)
+{
+	string fullPath = basePath + req->file.name;
+	ifstream file(fullPath);
+
+	if (req->status == 200 && req->method == GET)
 	{
-		//PUT
-		req->status = 201;
+		stringstream stream;
+		stream << file.rdbuf();
+		req->file.content = stream.str();
 	}
 }
+
+void GetFile(Request* req)
+{
+	AppendLanguageToFileName(req);
+	CheckFileExistence(req);
+	GetFileContent(req);
+
+	if (req->method != GET)
+	{
+		req->status = 201; // PUT
+	}
+}
+

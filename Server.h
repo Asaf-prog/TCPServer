@@ -3,11 +3,9 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_NONSTDC_NO_DEPRECATE
 
-#include <iostream>
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 #include <winsock2.h>
-#include <string.h>
 #include "HTTP.h"
 #include <fstream>
 
@@ -29,3 +27,6 @@ void GetFile(struct Request* req);
 void handleRecvError(int index, SOCKET msgSocket, struct SocketState* sockets, int* socketsCount);
 void handleRecvSuccess(int index, SOCKET msgSocket, int bytesRecv, struct SocketState* sockets, int* socketsCount);
 void parseRequest( string& cmd,  string& path, stringstream& mesStream, Request* req);
+void AppendLanguageToFileName(Request* req);
+void CheckFileExistence(Request* req);
+void GetFileContent(Request* req);

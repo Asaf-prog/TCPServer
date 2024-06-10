@@ -1,10 +1,12 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
+
 #include <iostream>
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 #include <winsock2.h>
 #include <string>
+#include <string.h>
 #include <sstream>
 #include <time.h>
 
@@ -53,7 +55,8 @@ struct SocketState {
 	clock_t responseTime = 0; 
 	clock_t turnaroundTime = 0;
 
-	SocketState() {
+	SocketState() 
+	{
 		std::memset(buffer, 0, sizeof(buffer)); 
 	}
 };
@@ -67,6 +70,7 @@ const int IDLE = 3;
 const int SEND = 4;
 const int SEND_TIME = 1;
 const int SEND_SECONDS = 2;
+const char* basePath = "/C:/Users/asafr/Desktop/";
 
 void FindWantedFile(string path, struct Request* req, string* cmd);
 void ParseGetMsg(stringstream& mesStream, struct Request* req);
@@ -75,3 +79,10 @@ void ParsePostMsg(stringstream& mesStream, struct Request* req);
 void ParsePutMsg(stringstream& mesStream, struct Request* req);
 string CreateMessage(struct SocketState socket);
 struct Attribute findNextAtt(stringstream& msg, string input);
+void AddStatusMessage(int status, stringstream& message);
+void AddMethodSpecificHeaders(struct SocketState socket, stringstream& message);
+void AddGETResponse(struct SocketState socket, stringstream& message);
+void AddHEADResponse(struct SocketState socket, stringstream& message);
+void AddDELResponse(struct SocketState socket, stringstream& message);
+void AddPUTResponse(struct SocketState socket, stringstream& message);
+void PrintPostData(const string& postData);

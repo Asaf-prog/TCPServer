@@ -4,7 +4,7 @@ void FindWantedFile(string path, struct Request* req, string* cmd)
 { 
 	// detecting query strings and extracting file name
 	
-	int pathSize = path.size();
+	int pathSize = static_cast<int>(path.size());
 
 	for (int i = 1; i < pathSize; i++) 
 	{
@@ -51,7 +51,7 @@ void ParseGetMsg(stringstream& mesStream, struct Request* req)
 	{
 		if (currAtt.key == "Accept-language") 
 		{
-			//just in case query strings are not available
+			// in the case that the query strings are not available
 			
 			req->file.language = currAtt.data;
 		}
@@ -62,7 +62,7 @@ void ParseGetMsg(stringstream& mesStream, struct Request* req)
 
 struct Attribute findNextAtt(stringstream& msg, string input) 
 {
-	//returning the next attribute in http message
+	// returning the next attribute in http message
 	
 	struct Attribute att;
 	int currIndex;
@@ -71,10 +71,10 @@ struct Attribute findNextAtt(stringstream& msg, string input)
 
 	if (att.key != "") 
 	{
-		att.key.pop_back();//remove ':' from key
-		//Because value could be seperated by spaces, we inserting chars manually
-		currIndex = msg.tellg();
-		currIndex++;//avoiding the space after the ':'
+		att.key.pop_back(); // remove ':' from key
+		
+		currIndex = static_cast<int>(msg.tellg());
+		currIndex++; // avoiding the space after the ':'
 		
 		while (input[currIndex] != '\r') 
 		{
@@ -82,7 +82,8 @@ struct Attribute findNextAtt(stringstream& msg, string input)
 			currIndex++;
 		}
 
-		currIndex += 2;//avoiding \n as well
+		currIndex += 2; // avoiding \n as well
+		
 		msg.seekg(currIndex);
 	}
 	else
@@ -95,8 +96,6 @@ struct Attribute findNextAtt(stringstream& msg, string input)
 
 void ParseMsg(stringstream& mesStream, struct Request* req) 
 {
-	// going through the entire request for further calculation
-	
 	string str = mesStream.str();
 	struct Attribute currAtt = findNextAtt(mesStream, str);
 
@@ -128,7 +127,7 @@ void ParsePostMsg(stringstream& mesStream, struct Request* req)
 				req->postContent.data.push_back(' ');
 			} while (req->postContent.data.size() < len);
 			
-			req->postContent.data.pop_back();//remove last space
+			req->postContent.data.pop_back(); // remove last space
 
 			cout << "POST:\n" << req->postContent.data << endl;
 			break;
@@ -153,7 +152,7 @@ void ParsePutMsg(stringstream& mesStream, struct Request* req)
 	{
 		if (currAtt.key == "Content-Length") 
 		{ 
-			//if we have arrived to the body of the request
+			// if we have arrived to the body of the request
 			
 			req->postContent.length = currAtt.data;
 			len = atoi(req->postContent.length.c_str());
@@ -163,7 +162,7 @@ void ParsePutMsg(stringstream& mesStream, struct Request* req)
 				req->file.content.append(temp);
 				req->file.content.push_back(' ');
 			} while (req->file.content.size() < len);
-			req->file.content.pop_back();//remove last space
+			req->file.content.pop_back(); // remove last space
 			break;
 		}
 		
@@ -171,7 +170,7 @@ void ParsePutMsg(stringstream& mesStream, struct Request* req)
 	}
 }
 
-string CreateMessage(struct SocketState socket) 
+string CreateMessage(struct SocketState socket)
 {
 	stringstream message;
 	time_t curr;
@@ -179,92 +178,144 @@ string CreateMessage(struct SocketState socket)
 
 	time(&curr);
 
-	//start of the response is the same for every method
 	message << "HTTP/1.1 " << socket.req.status << " ";
+	AddStatusMessage(socket.req.status, message);
 
-	switch (socket.req.status) 
-	{
-		case 200:
-			message << "OK\n";
-			break;
-		case 201:
-			message << "Created\n";
-			break;
-		case 204:
-			message << "No Content\n";
-			break;
-		case 404:
-			message << "Not Found\n";
-			break;
-		default:
-			message << "status error\n";
-	}
+	message << "Content-Type: text/html\n"
+		<< "Connection: keep-alive\n"
+		<< "Date: " << ctime(&curr) << "Server: HTTP Web Server\n";
 
-	message << "Content-Type: text/html\n" << "Connection: keep-alive\n" << "Date: " << ctime(&curr) << "Server: HTTP Web Server\n";
-
-	switch (socket.req.method) 
-	{
-		case GET:
-			if (socket.req.status == 200) 
-			{
-				message << "Content-Length: " << socket.req.file.content.size() << "\n" << "\n";
-				message << socket.req.file.content;
-			}
-			else 
-			{
-				//404
-				str = "404 NOT FOUND";
-				message << "Content-Length: " << str.size() << "\n" << "\n";
-				message << str;
-			}
-			break;
-		case OPTIONS:
-			message << "Allow: GET, POST, PUT, OPTIONS, DELETE, TRACE, HEAD\n";
-			message << "Accept-Language: he, en, fr\n" << "\n";
-			break;
-		case HEAD:
-			if (socket.req.status == 200) 
-			{
-				message << "Content-Length: " << socket.req.file.content.size() << "\n" << "\n";
-			}
-			else 
-			{
-				//404
-				str = "404 NOT FOUND";
-				message << "Content-Length: " << str.size() << "\n" << "\n";
-			}
-			break;
-		case POST:
-			str = "Sent POST response";
-			message << "Content-Length: " << str.size() << "\n" << "\n";
-			message << socket.req.postContent.data;
-			break;
-		case DEL:
-			if (socket.req.status == 200)
-				str = "File Deleted";
-			else //404
-				str = "404 NOT FOUND";
-			message << "Content-Length: " << str.size() << "\n" << "\n";
-			message << str;
-			break;
-		case TRACE:
-			message << "Content-Length: " << strlen(socket.buffer) << "\n" << "\n";
-			message << socket.buffer;
-			break;
-		case PUT:
-			if (socket.req.status == 201)
-				str = "File Created and Updated";
-			else //200
-				str = "File Overrun";
-			message << "Content-Length: " << str.size() << "\n" << "\n";
-			message << str;
-			break;
-		default://ERR
-			str = "Method not supported by this surver. Available methods specified with 'OPTIONS'";
-			message << "Content-Length: " << str.size() << "\n" << "\n";
-			message << str;
-			break;
-	}
+	AddMethodSpecificHeaders(socket, message);
 
 	return message.str();
+}
+
+void AddStatusMessage(int status, stringstream& message)
+{
+	switch (status)
+	{
+	case 200:
+		message << "OK\n";
+		break;
+	case 201:
+		message << "Created\n";
+		break;
+	case 204:
+		message << "No Content\n";
+		break;
+	case 404:
+		message << "Not Found\n";
+		break;
+	default:
+		message << "status error\n";
+	}
+}
+
+void AddMethodSpecificHeaders(struct SocketState socket, stringstream& message)
+{
+	string str;
+
+	switch (socket.req.method)
+	{
+		case GET:
+			AddGETResponse(socket, message);
+			break;
+		case OPTIONS:
+			message << "Allow: GET, POST, PUT, OPTIONS, DELETE, TRACE, HEAD\n"
+				<< "Accept-Language: he, en, fr\n\n";
+			break;
+		case HEAD:
+			AddHEADResponse(socket, message);
+			break;
+		case POST:
+			PrintPostData(socket.req.postContent.data);
+			message << "Content-Length: " << socket.req.postContent.data.size() << "\n\n"
+				<< socket.req.postContent.data;
+			break;
+		case DEL:
+			AddDELResponse(socket, message);
+			break;
+		case TRACE:
+			message << "Content-Length: " << strlen(socket.buffer) << "\n\n"
+				<< socket.buffer;
+			break;
+		case PUT:
+			AddPUTResponse(socket, message);
+			break;
+		default:
+			str = "Method not supported by this server. Available methods specified with 'OPTIONS'";
+			message << "Content-Length: " << str.size() << "\n\n"
+				<< str;
+			break;
+	}
+}
+
+void PrintPostData(const string& postData) 
+{
+	std::cout << "Received POST data: " << postData << std::endl;
+}
+
+void AddGETResponse(struct SocketState socket, stringstream& message)
+{
+	string str;
+
+	if (socket.req.status == 200)
+	{
+		message << "Content-Length: " << socket.req.file.content.size() << "\n\n"
+			<< socket.req.file.content;
+	}
+	else
+	{
+		str = "404 NOT FOUND";
+		message << "Content-Length: " << str.size() << "\n\n"
+			<< str;
+	}
+}
+
+void AddHEADResponse(struct SocketState socket, stringstream& message)
+{
+	string str;
+
+	if (socket.req.status == 200)
+	{
+		message << "Content-Length: " << socket.req.file.content.size() << "\n\n";
+	}
+	else
+	{
+		str = "404 NOT FOUND";
+
+		message << "Content-Length: " << str.size() << "\n\n";
+	}
+}
+
+void AddDELResponse(struct SocketState socket, stringstream& message)
+{
+	string str;
+	
+	if (socket.req.status == 200)
+	{
+		str = "File Deleted";
+	}
+	else
+	{
+		str = "404 NOT FOUND";
+	}
+
+	message << "Content-Length: " << str.size() << "\n\n" << str;
+}
+
+void AddPUTResponse(struct SocketState socket, stringstream& message)
+{
+	string str;
+
+	if (socket.req.status == 201)
+	{
+		str = "File Created and Updated";
+	}
+	else
+	{
+		str = "File Overrun";
+	}
+
+	message << "Content-Length: " << str.size() << "\n\n"<< str;
 }
