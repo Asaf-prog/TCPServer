@@ -13,7 +13,7 @@ using namespace std;
 #include <time.h>
 #include <vector>
 
-#define BASE_PATH "C:/Users/asafr/Desktop/test/"
+#define BASE_PATH "C:/Temp/"
 
 
 
