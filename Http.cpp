@@ -148,9 +148,7 @@ void ParsePutMsg(stringstream& mesStream, struct Request* req)
 	while (currAtt.key != "END") 
 	{
 		if (currAtt.key == "Content-Length") 
-		{ 
-			// if we have arrived to the body of the request
-			
+		{ 	
 			req->postContent.length = currAtt.data;
 			len = atoi(req->postContent.length.c_str());
 			do 

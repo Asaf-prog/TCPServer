@@ -218,7 +218,6 @@ void handleRecvSuccess(int index, SOCKET msgSocket, int bytesRecv, struct Socket
 	string cmd, path, httpVersion;
 	mesStream >> cmd;
 	mesStream >> path;
-	// me use in the variable 'httpVersion' to take the mesStream after the token that represent the hpp version
 	mesStream >> httpVersion;
 
 	parseRequest(cmd, path, mesStream, &(sockets[index].req));

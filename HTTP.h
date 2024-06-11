@@ -16,7 +16,6 @@ using namespace std;
 #define BASE_PATH "C:/Temp/"
 
 
-
 const int ERR = -1;
 const int OPTIONS = 1;
 const int GET = 2;
