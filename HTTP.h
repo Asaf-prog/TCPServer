@@ -60,8 +60,7 @@ struct SocketState {
 	clock_t responseTime = 0; 
 	clock_t turnaroundTime = 0;
 
-	SocketState() 
-	{
+	SocketState() {
 		std::memset(buffer, 0, sizeof(buffer)); 
 	}
 };
