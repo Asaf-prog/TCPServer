@@ -1,3 +1,6 @@
 .vs/
 *.vscode
 *.x64/
+/vcpkg/
+/cmake-build-debug/
+/.idea

@@ -2,17 +2,18 @@
 #pragma comment(lib, "Ws2_32.lib")
 #include <winsock2.h>
 #include "HTTP.h"
+#include "ThreadPool .h"
 #include <fstream>
 
 
 
 void importLib();
 SOCKET initiateSocket();
-void bindSocket(SOCKET* m_socket);
+void bindSocket(const SOCKET* m_socket);
 bool addSocket(SOCKET id, int what, struct SocketState* sockets, int* socketsCount);
 void createSets(fd_set* waitRecv, fd_set* waitSend, struct SocketState* sockets);
 void filterUpcomingEvents(int* nfd, fd_set* waitRecv, fd_set* waitSend);
-void handleEvents(int* nfd, fd_set* waitRecv, fd_set* waitSend, struct SocketState* sockets, int* socketsCount);
+void handleEvents(int* nfd, fd_set* waitRecv, fd_set* waitSend, struct SocketState* sockets, int* socketsCount, ThreadPool* threadPool);
 void finishingUp(SOCKET connSocket);
 void acceptConnection(int index, struct SocketState* sockets, int* socketsCount);
 void receiveMessage(int index, struct SocketState* sockets, int* socketsCount);

@@ -12,6 +12,7 @@ using namespace std;
 #include <sstream>
 #include <time.h>
 #include <vector>
+#include <cstring>
 
 #define BASE_PATH "C:/Temp/"
 
@@ -24,6 +25,8 @@ const int POST = 4;
 const int PUT = 5;
 const int DEL = 6;
 const int TRACE = 7;
+const int MINIMUM_NUMBER_OF_THREAD = 2;
+const int MAXIMUM_NUMBER_OF_THREAD = 8;
 
 
 struct Attribute {

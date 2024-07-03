@@ -41,8 +41,8 @@ void ParseGetMsg(stringstream& mesStream, struct Request* req) {
 	string str = mesStream.str();
 	struct Attribute currAtt = findNextAtt(mesStream, str);
 
-	while (currAtt.key != "END") 
-	{
+	while (currAtt.key != "END") {
+
 		if (currAtt.key == "Accept-Language") {
 			// in the case that the query strings are not available
 			
@@ -53,18 +53,17 @@ void ParseGetMsg(stringstream& mesStream, struct Request* req) {
 	}
 }
 
-struct Attribute findNextAtt(stringstream& msg, string input) 
-{
-	// returning the next attribute in http message
-	
+struct Attribute findNextAtt(stringstream& msg, string input) {
+
+    // returning the next attribute in http message
 	struct Attribute att;
 	int currIndex;
 	
 	msg >> att.key;
 
-	if (att.key != "") {
+	if (!att.key.empty()) {
 
-		att.key.pop_back(); // remove ':' from key
+		att.key.pop_back(); // remove ':' from a key
 		
 		currIndex = static_cast<int>(msg.tellg());
 		currIndex++; // avoiding the space after the ':'
@@ -79,6 +78,7 @@ struct Attribute findNextAtt(stringstream& msg, string input)
 		msg.seekg(currIndex);
 	}
 	else {
+
 		att.key = "END";
 	}
 

@@ -4,7 +4,8 @@ int main() {
 
     fd_set waitRecv, waitSend;
     int nfd;
-    SocketState* sockets = new SocketState[MAX_SOCKETS](); 
+    auto* sockets = new SocketState[MAX_SOCKETS]();
+    auto* threadPool = new ThreadPool(MINIMUM_NUMBER_OF_THREAD, MAXIMUM_NUMBER_OF_THREAD);
     int socketsCount = 0;
 
     importLib();
@@ -21,12 +22,11 @@ int main() {
 
     // Add the listen socket to the array of all the sockets
     addSocket(listenSocket, LISTEN, sockets, &socketsCount);
-
+    std::cout << "run "<< std::endl;
     while (true) {
-
        createSets(&waitRecv, &waitSend, sockets);
        filterUpcomingEvents(&nfd, &waitRecv, &waitSend);
-       handleEvents(&nfd, &waitRecv, &waitSend, sockets, &socketsCount);
+       handleEvents(&nfd, &waitRecv, &waitSend, sockets, &socketsCount, threadPool);
     }
 
     finishingUp(listenSocket);
